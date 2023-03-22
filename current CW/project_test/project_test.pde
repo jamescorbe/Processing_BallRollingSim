@@ -15,11 +15,15 @@ SimpleUI UI;
 SimSphereMover moveBall;
 PImage image;
 int terrainWidth;
+int newBallCount;
 float terrainHeight =0;
 PVector ballMotionVector; 
 PVector force;
 String terrainImg = "hill2.jpg";
-PVector Gravity;
+float newGravity;
+int ballSpaceX;
+int ballSpaceY;
+int ballSpaceZ;
 PVector objectVelocity;
 PVector minVelociy;
 int numberOfBalls;
@@ -29,16 +33,18 @@ SimCamera myCamera;
 
 void setup(){
   UI = new SimpleUI();
-  numberOfBalls = 5;
-  minVelociy = new PVector(0.1,0.1,0.1);
+  numberOfBalls = 20;
+  minVelociy = new PVector(0.01,0.01,0.01);
   size(900, 700, P3D);
   
-  String[] menuItems = {"save","load","quit"};
-  UI.addMenu("File", 20,20, menuItems);
-  UI.addToggleButton("move", 20,45);
-  UI.addToggleButton("reset", 20,70);
-  UI.addSlider("height", 20,240).setSliderValue(0);
-  UI.addSlider("width", 20,100).setSliderValue(0);
+  UI.addSimpleButton("reset", 20,20);
+  UI.addSlider("height", 20,55).setSliderValue(0);
+  UI.addSlider("width", 20,90).setSliderValue(0);
+  UI.addTextInputBox("Balls", 20,130).setText("20");
+  UI.addSimpleButton("Update Balls",20,165);
+  UI.addTextInputBox("Gravity", 20,195).setText("9.8");
+  UI.addSimpleButton("Update Gravity",20,230);
+  
   
   ball1 = new SimSphereMover(vec(0,-100,40), 8.0f);
   ball2 = new SimSphereMover(vec(0,-100,0), 8.0f);
@@ -47,8 +53,8 @@ void setup(){
   ////////////////////////////
   // create the SimCamera
   myCamera = new SimCamera();
-  myCamera.setPositionAndLookat(vec(  -66.66498, -37.02684, 175.28958),vec(-66.19523, -37.103973, 174.41016)); 
-  myCamera.setHUDArea(20,20,200,200);
+  myCamera.setPositionAndLookat(vec( -470.6324, -179.39978, -20.768616),vec(-65.19523, -35.103973, 10.41016)); 
+  myCamera.setHUDArea(20,20,200,260);
   myCamera.isMoving = false;
   
   
@@ -61,16 +67,22 @@ void setup(){
   terrain.setTransformAbs( 1, 0,0,0, vec(-205,0,-205));
   minVel = new PVector(0,0,0);
   ballMotionVector = new PVector(0,1,0.1);
-  Gravity = new PVector(0,40,0);
-  
+
   
  // simObjectManager.addSimObject(terrain,"table");
   makeSomeBalls();
   
-  
 }
-
-
+void updateBallGravity()
+{
+  for(int n = 0; n < numberOfBalls; n++){
+    print("Grav  update");
+    print(simObjectManager.getSimSphereObject(n).physics.inGravity);
+    simObjectManager.getSimSphereObject(n).physics.inGravity = newGravity;
+    simObjectManager.getSimSphereObject(n).physics.updateGravity();
+    
+  }
+}
 
 void draw(){
   background(0);
@@ -85,20 +97,18 @@ void draw(){
   fill(255,0,0);
   //ball1.drawMe();
   //ball2.drawMe();
-  ball1.physics.addForce(Gravity);
 
   ballCollision();
-  updateBallDrop();
-  ball1.physics.applyFriction();
   myCamera.update();
   drawMajorAxis(new PVector(0,0,0), 200); 
-  drawTheballs();
   
    myCamera.startDrawHUD();
     // any 2d drawing has to happen between 
     // startDrawHUD and endDrawHUD
     UI.update();
   myCamera.endDrawHUD();
+  drawTheballs();
+  updateBallDrop();
 }
 
 void handleUIEvent(UIEventData uied){
@@ -133,6 +143,48 @@ void handleUIEvent(UIEventData uied){
     terrain = terrain2;
     terrain.setTransformAbs( 1, 0,0,0, vec(-205,0,-205));
   }
+
+ 
+  if(uied.eventIsFromWidget("Update Balls"))
+  {
+    try{
+    newBallCount = int(UI.getText("Balls"));
+    
+    if(newBallCount <200)
+      {
+        numberOfBalls = newBallCount;
+        simObjectManager.clearBalls();
+        makeSomeBalls();
+        
+      }
+    else
+      {
+        print("ball count too high 200 is the maximum!");
+      }
+   
+    }
+    catch(Exception e)
+    {
+      print(e);
+    }
+  }
+  if(uied.eventIsFromWidget("Update Gravity"))
+  {
+    try
+    {
+      float gravity = float(UI.getText("Gravity"));
+      gravity = (gravity * 8.1632653); 
+ 
+      newGravity = gravity;
+      updateBallGravity();
+    }
+    catch(Exception e)
+    {
+      
+    }
+  
+  }
+  
   
   /////////////////////////////////////////////////////////////
   // this stuff opens the file dialogue window, and then when you have
@@ -154,15 +206,21 @@ void handleUIEvent(UIEventData uied){
 void makeSomeBalls(){
  
   for(int n = 0; n < numberOfBalls; n++){
-    float radius = random(4,9);
-    float x = random(0,10);
-    float y = random(0,20);
-    float z = random(0,40);
+    float radius = random(4,15);
+    float x = random(-180,190);
+    float y = random(-200,-40);
+    float z = random(-160,-50);
     SimSphereMover planet = new SimSphereMover(vec(x,y,z), radius);
      planet.levelOfDetail = 8;
    
     simObjectManager.addSphereObject(planet, "ball_" + n);
+    simObjectManager.getSimSphereObject(n).physics.updateMass(radius/4);
     print(simObjectManager.getSimSphereObjects());
+    if(newGravity != 0)
+    {
+      simObjectManager.getSimSphereObject(n).physics.inGravity = newGravity;
+      simObjectManager.getSimSphereObject(n).physics.updateGravity();
+    }
    
   }
   }
@@ -194,11 +252,11 @@ void ballCollision(){
     {
       objectVelocity = simObjectManager.getSimSphereObject(x).physics.velocity;
       if( simObjectManager.getSimSphereObject(i).collidesWith(simObjectManager.getSimSphereObject(x)) ){
-    println("colliding");
+    //println("colliding");
     simObjectManager.getSimSphereObject(i).physics.collisionResponse(simObjectManager.getSimSphereObject(x).physics);
      if((objectVelocity.x > minVelociy.x && objectVelocity.y > minVelociy.y && objectVelocity.z > minVelociy.z) && !simObjectManager.getSimSphereObject(i).physics.getisGravity())
       {
-        simObjectManager.getSimSphereObject(x).physics.toggleisGravity();
+       // simObjectManager.getSimSphereObject(x).physics.toggleisGravity();
       }
     drawTheballs();
 
@@ -221,7 +279,7 @@ void updateBallDrop(){
   
   // cast a ray out from the ball along its line of travel
   SimRay ballray = new SimRay( simObjectManager.getSimSphereObject(i).getOrigin(), PVector.add(simObjectManager.getSimSphereObject(i).getOrigin(), ballMotionVector));
-  drawray(ballray);
+  //drawray(ballray);
   
   // see if it intersects the terrain
   if( ballray.calcIntersection(terrain))
@@ -232,7 +290,7 @@ void updateBallDrop(){
 
     PVector reflectionVector = reflectOffSurface(ballMotionVector, intersectionNormal);
     SimRay reflectionRay = new SimRay(intersectionPt, PVector.add(intersectionPt, reflectionVector));
-    drawray(reflectionRay);
+    //drawray(reflectionRay);
   
     // now see if it is colliding with the terrain yet
     if( simObjectManager.getSimSphereObject(i).isPointInside(  intersectionPt ) ) 
@@ -241,37 +299,28 @@ void updateBallDrop(){
       //ballMotionVector = reflectionVector.copy();
       PVector unitReflect = reflectionRay.direction.normalize();
       PVector velocityOnBounce = PVector.mult(unitReflect, speed);
+      velocityOnBounce = PVector.div(velocityOnBounce, (simObjectManager.getSimSphereObject(i).physics.mass)/2);
       //PVector  RVincreased = PVector.mult(reflectionVector.copy(), 3000);
       // PVector resultForce = PVector.add(inverse, RVincreased);
       //ball1.physics.addForce(resultForce);
-      
+      objectVelocity = simObjectManager.getSimSphereObject(i).physics.velocity;
       simObjectManager.getSimSphereObject(i).physics.velocity = velocityOnBounce;
-      if (velocityOnBounce.x < minVelociy.x && velocityOnBounce.y < minVelociy.y && velocityOnBounce.z < minVelociy.z)
+      if (simObjectManager.getSimSphereObject(i).physics.isterrainCollide())
       {
-        //simObjectManager.getSimSphereObject(i).physics.toggleisGravity();
-        simObjectManager.getSimSphereObject(i).physics.velocity = new PVector(0,0,0);
-        //simObjectManager.getSimSphereObject(i).physics.addForce(new PVector(0,-41,0));
+        print("hello");
+        simObjectManager.getSimSphereObject(i).physics.addForce(new PVector(0,-(simObjectManager.getSimSphereObject(i).physics.inGravity *16),0));
       }
-      else if ((velocityOnBounce.x > minVelociy.x && velocityOnBounce.y > minVelociy.y && velocityOnBounce.z > minVelociy.z) && !simObjectManager.getSimSphereObject(i).physics.getisGravity())
+      if(simObjectManager.getSimSphereObject(i).physics.isterrainCollide() && (objectVelocity.x < minVelociy.x && objectVelocity.y < minVelociy.y && objectVelocity.z < minVelociy.z))
       {
-        simObjectManager.getSimSphereObject(i).physics.toggleisGravity();
+        simObjectManager.getSimSphereObject(i).physics.addForce(new PVector(0,-(simObjectManager.getSimSphereObject(i).physics.inGravity *13),0));
       }
-      else
-      {
-        
-      }
-      
+      simObjectManager.getSimSphereObject(i).physics.setterrainCollide(true);
     }
       
   }
-  objectVelocity =simObjectManager.getSimSphereObject(i).physics.velocity;
-  if(objectVelocity.x > minVelociy.x && objectVelocity.y > minVelociy.y && objectVelocity.z > minVelociy.z)
-  {
-    simObjectManager.getSimSphereObject(i).physics.simulateGravity();
-  }
   else
   {
-    
+     simObjectManager.getSimSphereObject(i).physics.setterrainCollide(false);
   }
     
  }
@@ -348,6 +397,11 @@ void keyPressed(){
   if(key == 's'){
     // towards the user
     moveObject(0,0,force);
+    }
+    
+    if(key == 'b'){
+    // towards the user
+    print(myCamera.getPosition());
     }
   
   if(key == CODED){

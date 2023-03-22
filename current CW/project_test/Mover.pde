@@ -22,8 +22,10 @@ class Mover {
   PVector velocity = new PVector(0, 0);
   PVector acceleration = new PVector(0,0);
   boolean isGravity = true;
-  PVector gravity = new PVector(0,40,0);
-  private float mass = 1;
+  boolean terrainCollide = false;
+  float inGravity = 80;
+  PVector gravity = new PVector(0,inGravity,0);
+  float mass = 1;
   float radius = 1;
   float frictionAmount = .3;
 
@@ -45,6 +47,22 @@ class Mover {
   boolean getisGravity()
   {
     return isGravity;
+  }
+  void updateGravity()
+  {
+    gravity = new PVector(0,inGravity,0);
+  }
+  void updateMass(float inMass)
+  {
+    mass = inMass;
+  }
+  void setterrainCollide(boolean isColliding)
+  {
+    terrainCollide = isColliding;
+  }
+  boolean isterrainCollide()
+  {
+    return terrainCollide;
   }
 
   ////////////////////////////////////////////////////////////
