@@ -10,7 +10,7 @@ SimObjectManager simObjectManager = new SimObjectManager();
 SimSurfaceMesh terrain; 
 SimSphereMover ball1;
 SimSphereMover ball2;
-
+SimModel BackGround;
 SimpleUI UI;
 SimSphereMover moveBall;
 PImage image;
@@ -39,7 +39,7 @@ void setup(){
   numberOfBalls = 20;
   minVelociy = new PVector(0.1,0.1,0.1);
   size(900, 700, P3D);
-  
+  BackGround = new SimModel("G4G_BG.obj");
   UI.addSimpleButton("reset", 20,20);
   UI.addSlider("height", 20,55).setSliderValue(0);
   UI.addSlider("width", 20,90).setSliderValue(0);
@@ -49,8 +49,8 @@ void setup(){
   UI.addSimpleButton("Update Balls",20,235);
   UI.addTextInputBox("Gravity", 20,270).setText("9.8");
   UI.addSimpleButton("Update Gravity",20,305);
-  
-  
+  BackGround.setTransformAbs(10, 3.1415,0,0, vec(-305,210,-205));
+  BackGround.showBoundingVolume(false);
   ball1 = new SimSphereMover(vec(0,-100,40), 8.0f);
   ball2 = new SimSphereMover(vec(0,-100,0), 8.0f);
   
@@ -98,7 +98,7 @@ void draw(){
   fill(150,200, 150 );
   noStroke();
   terrain.drawMe(); 
-
+  BackGround.drawMe();
   fill(255,0,0);
   //ball1.drawMe();
   //ball2.drawMe();
