@@ -41,9 +41,11 @@ void setup(){
   UI.addSlider("height", 20,55).setSliderValue(0);
   UI.addSlider("width", 20,90).setSliderValue(0);
   UI.addTextInputBox("Balls", 20,130).setText("20");
-  UI.addSimpleButton("Update Balls",20,165);
-  UI.addTextInputBox("Gravity", 20,195).setText("9.8");
-  UI.addSimpleButton("Update Gravity",20,230);
+  UI.addTextInputBox("min Size", 20,165).setText("4");
+  UI.addTextInputBox("max Size", 20,200).setText("4");
+  UI.addSimpleButton("Update Balls",20,235);
+  UI.addTextInputBox("Gravity", 20,270).setText("9.8");
+  UI.addSimpleButton("Update Gravity",20,305);
   
   
   ball1 = new SimSphereMover(vec(0,-100,40), 8.0f);
@@ -101,14 +103,14 @@ void draw(){
   ballCollision();
   myCamera.update();
   drawMajorAxis(new PVector(0,0,0), 200); 
-  
+  drawTheballs();
+  updateBallDrop();
    myCamera.startDrawHUD();
     // any 2d drawing has to happen between 
     // startDrawHUD and endDrawHUD
     UI.update();
   myCamera.endDrawHUD();
-  drawTheballs();
-  updateBallDrop();
+  
 }
 
 void handleUIEvent(UIEventData uied){
