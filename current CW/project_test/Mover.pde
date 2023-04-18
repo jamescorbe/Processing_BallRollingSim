@@ -23,7 +23,7 @@ class Mover {
   PVector acceleration = new PVector(0,0);
   boolean isGravity = true;
   boolean terrainCollide = false;
-  float inGravity = 80;
+  float inGravity = 160;
   PVector gravity = new PVector(0,inGravity,0);
   float mass = 1;
   float radius = 1;
